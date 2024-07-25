@@ -8,6 +8,7 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import com.example.bookStoreWebApp.dto.UserDto;
 import com.example.bookStoreWebApp.model.Users;
 import com.example.bookStoreWebApp.repository.UserRepository;
 
@@ -39,5 +40,17 @@ public class UserServiceImpl implements UserService, UserDetailsService{
     public Optional<Users> findByUsername(String userName) {
         return userRepository.findByUsername(userName);
     }
+	@Override
+    public Optional<UserDto> findUserByUsername(String userName) {
+        Optional<Users> user = userRepository.findByUsername(userName);
+        if (user.isPresent()) {
+            Users u = user.get();
+            UserDto userDto = new UserDto(u.getUserName(), u.getEmail(), u.getFirstName(), u.getLastName());
+            return Optional.of(userDto);
+        }
+        return Optional.empty();
+    }
+
+
 
 }
