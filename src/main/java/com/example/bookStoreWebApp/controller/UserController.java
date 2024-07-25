@@ -13,12 +13,14 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.bookStoreWebApp.dto.LoginRequest;
+import com.example.bookStoreWebApp.dto.UpdateUserDto;
 import com.example.bookStoreWebApp.dto.UserDto;
 import com.example.bookStoreWebApp.model.Users;
 import com.example.bookStoreWebApp.security.JwtUtil;
@@ -64,6 +66,20 @@ public class UserController {
         return userDto.map(ResponseEntity::ok)
                       .orElseGet(() -> ResponseEntity.notFound().build());
     }
+    
+    @PutMapping("/update/{username}")
+    public ResponseEntity<Users> updateUser(@PathVariable String username, @RequestBody UpdateUserDto updateUserDto) {
+        Optional<Users> updatedUser = userService.updateUser(
+                username,
+                updateUserDto.getFirstName(),
+                updateUserDto.getLastName(), // Only the last name is provided here
+                updateUserDto.getPassword(),
+                updateUserDto.getMobileNumber()
+        );
+        return updatedUser.map(ResponseEntity::ok)
+                          .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
 
 
 }

@@ -50,6 +50,30 @@ public class UserServiceImpl implements UserService, UserDetailsService{
         }
         return Optional.empty();
     }
+	
+	@Override
+	public Optional<Users> updateUser(String username, String firstName, String lastName, String password, String mobileNumber) {
+	    Optional<Users> userOptional = userRepository.findByUsername(username);
+	    if (userOptional.isPresent()) {
+	        Users user = userOptional.get();
+	        if (firstName != null && !firstName.isEmpty()) {
+	            user.setFirstName(firstName);
+	        }
+	        if (lastName != null && !lastName.isEmpty()) {
+	            user.setLastName(lastName);
+	        }
+	        if (password != null && !password.isEmpty()) {
+	            user.setPassword(password); // Consider hashing the password
+	        }
+	        if (mobileNumber != null && !mobileNumber.isEmpty()) {
+	            user.setMobileNumber(mobileNumber);
+	        }
+	        // Save and return the updated user
+	        return Optional.of(userRepository.save(user));
+	    }
+	    return Optional.empty();
+	}
+
 
 
 
