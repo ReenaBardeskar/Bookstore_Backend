@@ -28,25 +28,31 @@ public class SecurityConfig {
 //    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 //        http.csrf().disable()
 //            .authorizeRequests()
-//            .requestMatchers("/user/add", "/user/login").permitAll()
-//            .requestMatchers("/user/**").permitAll()
-//            .anyRequest().authenticated()
+//            .requestMatchers("/user/add", "/user/login", "/books").permitAll()  // Permit all requests to these endpoints
+//            .requestMatchers("/user/**","/books/**" ).permitAll()  // Permit all requests to endpoints starting with /user/ and /books/
+//            .anyRequest().authenticated()  // Require authentication for any other requests
 //            .and()
 //            .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
 //
+//        // Add JWT filter before the UsernamePasswordAuthenticationFilter
 //        http.addFilterBefore(new JwtRequestFilter(userService, jwtUtil), UsernamePasswordAuthenticationFilter.class);
 //
 //        return http.build();
 //    }
+    
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-        http.csrf().disable()
-            .authorizeRequests()
-            .requestMatchers("/user/add", "/user/login").permitAll()  // Permit all requests to these endpoints
-            .requestMatchers("/user/**").permitAll()  // Permit all requests to endpoints starting with /user/
-            .anyRequest().authenticated()  // Require authentication for any other requests
-            .and()
-            .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS);
+        http
+            // Disable CSRF protection
+            .csrf(csrf -> csrf.disable())
+            .authorizeHttpRequests(authorize -> authorize
+                .requestMatchers("/user/add", "/user/login").permitAll() // Allow access to public endpoints
+                .requestMatchers("/user/**", "/books/**").permitAll() // Allow access to books endpoints
+                .anyRequest().authenticated()  // Require authentication for all other requests
+            )
+            .sessionManagement(session -> session
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            );
 
         // Add JWT filter before the UsernamePasswordAuthenticationFilter
         http.addFilterBefore(new JwtRequestFilter(userService, jwtUtil), UsernamePasswordAuthenticationFilter.class);
