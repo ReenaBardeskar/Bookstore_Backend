@@ -23,4 +23,9 @@ public class BooksServiceImpl implements BooksService {
     public Optional<Books> findByIsbn(String isbn) {
         return bookRepository.findByIsbn(isbn); // Assuming findByIsbn is defined in the repository
     }
+    
+    @Override
+    public List<Books> getBooksByIsbnList(List<String> isbns) {
+        return bookRepository.findByIsbnList(isbns);
+    }
 }
