@@ -23,6 +23,13 @@ public class BookController {
 
     @Autowired
     private BooksService booksService;
+    
+    
+    @PostMapping("/add")
+    public ResponseEntity<Books> addBook(@RequestBody Books book) {
+        Books savedBook = booksService.saveBook(book);
+        return ResponseEntity.ok(savedBook);
+    }
 
     @GetMapping
     public List<Books> getAllBooks() {

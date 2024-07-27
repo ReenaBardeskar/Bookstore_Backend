@@ -19,6 +19,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.bookStoreWebApp.dto.JwtResponse;
 import com.example.bookStoreWebApp.dto.LoginRequest;
 import com.example.bookStoreWebApp.dto.UpdateUserDto;
 import com.example.bookStoreWebApp.dto.UserDto;
@@ -50,14 +51,26 @@ public class UserController {
     // Login Endpoint
     @PostMapping("/login")
     public ResponseEntity<?> loginUser(@RequestBody LoginRequest loginRequest) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
-        SecurityContextHolder.getContext().setAuthentication(authentication);
+//        Authentication authentication = authenticationManager.authenticate(
+//                new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
+//        SecurityContextHolder.getContext().setAuthentication(authentication);
+//
+//        String username = loginRequest.getUsername(); // Extract username from the login request
+//        String token = jwtUtil.generateToken(username);
+//
+//        return ResponseEntity.ok("Bearer " + token);
+    	 Authentication authentication = authenticationManager.authenticate(
+                 new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
+         SecurityContextHolder.getContext().setAuthentication(authentication);
 
-        String username = loginRequest.getUsername(); // Extract username from the login request
-        String token = jwtUtil.generateToken(username);
+         String username = loginRequest.getUsername(); // Extract username from the login request
+         String token = jwtUtil.generateToken(username);
 
-        return ResponseEntity.ok("Bearer " + token);
+         Users user = userService.findByUsername(username).orElseThrow(() -> new RuntimeException("User not found"));
+
+         JwtResponse response = new JwtResponse("Bearer " + token, user.getAccountTypeId());
+
+         return ResponseEntity.ok(response);
     }
     
     @GetMapping("/{username}")
