@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -47,5 +48,11 @@ public class BookController {
     @PostMapping("/by-isbn")
     public List<Books> getBooksByIsbn(@RequestBody List<String> isbns) {
         return booksService.getBooksByIsbnList(isbns);
+    }
+    
+    @GetMapping("/search")
+    public ResponseEntity<List<Books>> searchBooks(@RequestParam String searchTerm) {
+        List<Books> books = booksService.searchBooks(searchTerm);
+        return ResponseEntity.ok(books);
     }
 }

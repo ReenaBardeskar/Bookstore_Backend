@@ -11,5 +11,7 @@ public interface BooksService {
     List<Books> getAllBooks();
     Optional<Books> findByIsbn(String isbn); 
     List<Books> getBooksByIsbnList(List<String> isbns);
+    List<Books> searchBooks(String searchTerm);
+
 
 }

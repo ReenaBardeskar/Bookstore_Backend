@@ -33,4 +33,9 @@ public class BooksServiceImpl implements BooksService {
     public List<Books> getBooksByIsbnList(List<String> isbns) {
         return bookRepository.findByIsbnList(isbns);
     }
+    
+    @Override
+    public List<Books> searchBooks(String searchTerm) {
+        return bookRepository.searchBooks(searchTerm);
+    }
 }

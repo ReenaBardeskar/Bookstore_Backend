@@ -15,5 +15,12 @@ public interface BookRepository extends JpaRepository<Books, Integer> {
     
     @Query("SELECT b FROM Books b WHERE b.isbn IN :isbns")
     List<Books> findByIsbnList(@Param("isbns") List<String> isbns);
+    
+    @Query("SELECT b FROM Books b WHERE " +
+            "LOWER(b.title) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
+            "LOWER(b.author) LIKE LOWER(CONCAT('%', :searchTerm, '%')) OR " +
+            "LOWER(b.category) LIKE LOWER(CONCAT('%', :searchTerm, '%'))")
+     List<Books> searchBooks(@Param("searchTerm") String searchTerm);
+    
 
 }
