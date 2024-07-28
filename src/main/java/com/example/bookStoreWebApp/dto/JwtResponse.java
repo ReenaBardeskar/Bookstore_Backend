@@ -9,7 +9,7 @@ public class JwtResponse {
         this.accountTypeId = accountTypeId;
     }
 
-    // Getters and Setters
+    // Getters and setters
     public String getToken() {
         return token;
     }

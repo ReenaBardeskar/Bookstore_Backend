@@ -1,13 +1,15 @@
 package com.example.bookStoreWebApp.controller;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,6 +27,7 @@ import com.example.bookStoreWebApp.dto.UpdateUserDto;
 import com.example.bookStoreWebApp.dto.UserDto;
 import com.example.bookStoreWebApp.model.Users;
 import com.example.bookStoreWebApp.security.JwtUtil;
+import com.example.bookStoreWebApp.service.EmailService;
 import com.example.bookStoreWebApp.service.UserService;
 
 
@@ -35,6 +38,9 @@ public class UserController {
 
     @Autowired
     private UserService userService;
+    
+    @Autowired
+    private EmailService emailService;
 
     @Autowired
     private AuthenticationManager authenticationManager;
@@ -42,36 +48,93 @@ public class UserController {
     @Autowired
     private JwtUtil jwtUtil;
 
+//    @PostMapping("/add")
+//    public String add(@RequestBody Users user) {
+//        userService.saveUser(user);
+//        return "New User is Added";
+//    }
+    
+    
+ // // Registration Endpoint
     @PostMapping("/add")
     public String add(@RequestBody Users user) {
+        user.setAccountStatusId(0); // 0 for inactive
+        Users savedUser = userService.saveUser(user);
+
+        // Generate verification token
+        Map<String, Object> claims = new HashMap<>();
+        String token = jwtUtil.generateToken(claims, savedUser.getUserName());
+        String confirmationUrl = "http://localhost:8080/user/confirm?token=" + token;
+
+        emailService.sendEmail(user.getEmail(), "Account Confirmation", "Please confirm your account by clicking on this link: " + confirmationUrl);
+
+        return "Registration successful. Please check your email to confirm your account.";
+    }
+
+    @GetMapping("/confirm")
+    public ResponseEntity<?> confirmUser(@RequestParam("token") String token) {
+        String username = jwtUtil.extractUsername(token);
+        Users user = userService.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Update user account status
+        user.setAccountStatusId(1); // Assuming 1 is the ID for active status
         userService.saveUser(user);
-        return "New User is Added";
+
+        return ResponseEntity.ok("User verified successfully");
     }
     
     // Login Endpoint
+//    @PostMapping("/login")
+//    public ResponseEntity<?> loginUser(@RequestBody LoginRequest loginRequest) {
+////        Authentication authentication = authenticationManager.authenticate(
+////                new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
+////        SecurityContextHolder.getContext().setAuthentication(authentication);
+////
+////        String username = loginRequest.getUsername(); // Extract username from the login request
+////        String token = jwtUtil.generateToken(username);
+////
+////        return ResponseEntity.ok("Bearer " + token);
+//    	 Authentication authentication = authenticationManager.authenticate(
+//                 new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
+//         SecurityContextHolder.getContext().setAuthentication(authentication);
+//
+//         String username = loginRequest.getUsername(); // Extract username from the login request
+//         String token = jwtUtil.generateToken(username);
+//
+//         Users user = userService.findByUsername(username).orElseThrow(() -> new RuntimeException("User not found"));
+//
+//         JwtResponse response = new JwtResponse("Bearer " + token, user.getAccountTypeId());
+//
+//         return ResponseEntity.ok(response);
+//    }
+    
     @PostMapping("/login")
     public ResponseEntity<?> loginUser(@RequestBody LoginRequest loginRequest) {
-//        Authentication authentication = authenticationManager.authenticate(
-//                new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
-//        SecurityContextHolder.getContext().setAuthentication(authentication);
-//
-//        String username = loginRequest.getUsername(); // Extract username from the login request
-//        String token = jwtUtil.generateToken(username);
-//
-//        return ResponseEntity.ok("Bearer " + token);
-    	 Authentication authentication = authenticationManager.authenticate(
-                 new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
-         SecurityContextHolder.getContext().setAuthentication(authentication);
+        // Authenticate user
+        Authentication authentication = authenticationManager.authenticate(
+                new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
+        SecurityContextHolder.getContext().setAuthentication(authentication);
 
-         String username = loginRequest.getUsername(); // Extract username from the login request
-         String token = jwtUtil.generateToken(username);
+        // Fetch user details
+        Users user = userService.findByUsername(loginRequest.getUsername())
+                .orElseThrow(() -> new RuntimeException("User not found"));
 
-         Users user = userService.findByUsername(username).orElseThrow(() -> new RuntimeException("User not found"));
+        // Check account status
+        if (user.getAccountStatusId() == 0) {
+            return ResponseEntity.status(HttpStatus.PRECONDITION_REQUIRED).body("Account not active. Please check your email to activate your account.");
+        }
 
-         JwtResponse response = new JwtResponse("Bearer " + token, user.getAccountTypeId());
+        // Generate token
+        Map<String, Object> claims = new HashMap<>();
+        String token = jwtUtil.generateToken(claims, loginRequest.getUsername());
 
-         return ResponseEntity.ok(response);
+        // Create response with token and account type ID
+        JwtResponse response = new JwtResponse("Bearer " + token, user.getAccountTypeId());
+
+        return ResponseEntity.ok(response);
     }
+    
     
     @GetMapping("/{username}")
     public ResponseEntity<UserDto> getUserByUsername(@PathVariable String username) {

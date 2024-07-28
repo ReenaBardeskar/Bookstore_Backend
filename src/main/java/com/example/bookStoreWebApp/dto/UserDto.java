@@ -5,6 +5,9 @@ public class UserDto {
     private String email;
     private String firstName;
     private String lastName;
+    private Integer accountStatusId;
+
+
 
     // Constructors
     public UserDto() {}
@@ -48,4 +51,12 @@ public class UserDto {
     public void setLastName(String lastName) {
         this.lastName = lastName;
     }
+
+	public Integer getAccountStatusId() {
+		return accountStatusId;
+	}
+
+	public void setAccountStatusId(Integer accountStatusId) {
+		this.accountStatusId = accountStatusId;
+	}
 }
