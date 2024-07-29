@@ -155,6 +155,41 @@ public class UserController {
         return updatedUser.map(ResponseEntity::ok)
                           .orElseGet(() -> ResponseEntity.notFound().build());
     }
+    
+    @PostMapping("/forgot-password")
+    public ResponseEntity<String> forgotPassword(@RequestBody Map<String, String> request) {
+        String username = request.get("username");
+        Users user = userService.findByUsername(username).orElse(null);
+
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Username not found");
+        }
+
+        Map<String, Object> claims = new HashMap<>();
+        String token = jwtUtil.generateToken(claims, username);
+        String resetUrl = "http://localhost:3000/reset-password?token=" + token + "&username=" + username;
+
+        emailService.sendEmail(user.getEmail(), "Password Reset Request", "Click the link to reset your password: " + resetUrl);
+
+        return ResponseEntity.ok("A password reset email has been sent.");
+    }
+
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<String> resetPassword(@RequestBody Map<String, String> request) {
+        String token = request.get("token");
+        String newPassword = request.get("password");
+
+        String username = jwtUtil.extractUsername(token);
+        Users user = userService.findByUsername(username).orElseThrow(() -> new RuntimeException("User not found"));
+
+        user.setPassword(newPassword);  // Not encrypting the password
+        userService.saveUser(user);
+
+        return ResponseEntity.ok("Your password has been reset.");
+    }
+
+
 
 
 
