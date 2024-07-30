@@ -25,10 +25,14 @@ import com.example.bookStoreWebApp.dto.JwtResponse;
 import com.example.bookStoreWebApp.dto.LoginRequest;
 import com.example.bookStoreWebApp.dto.UpdateUserDto;
 import com.example.bookStoreWebApp.dto.UserDto;
+import com.example.bookStoreWebApp.dto.UserRegistrationRequestDTO;
 import com.example.bookStoreWebApp.model.Users;
 import com.example.bookStoreWebApp.security.JwtUtil;
 import com.example.bookStoreWebApp.service.EmailService;
+import com.example.bookStoreWebApp.service.ShippingAddressService;
 import com.example.bookStoreWebApp.service.UserService;
+
+import jakarta.validation.Valid;
 
 
 @RestController
@@ -41,6 +45,9 @@ public class UserController {
     
     @Autowired
     private EmailService emailService;
+    
+    @Autowired
+    private ShippingAddressService shippingAddressService;
 
     @Autowired
     private AuthenticationManager authenticationManager;
@@ -55,21 +62,56 @@ public class UserController {
 //    }
     
     
- // // Registration Endpoint
+// // // Registration Endpoint
+//    @PostMapping("/add")
+//    public String add(@RequestBody Users user) {
+//        user.setAccountStatusId(0); // 0 for inactive
+//        Users savedUser = userService.saveUser(user);
+//
+//        // Generate verification token
+//        Map<String, Object> claims = new HashMap<>();
+//        String token = jwtUtil.generateToken(claims, savedUser.getUserName());
+//        String confirmationUrl = "http://localhost:8080/user/confirm?token=" + token;
+//
+//        emailService.sendEmail(user.getEmail(), "Account Confirmation", "Please confirm your account by clicking on this link: " + confirmationUrl);
+//
+//        return "Registration successful. Please check your email to confirm your account.";
+//    }
+    
     @PostMapping("/add")
-    public String add(@RequestBody Users user) {
+    public ResponseEntity<String> add(@Valid @RequestBody UserRegistrationRequestDTO registrationRequest) {
+        // Create user from registration request
+        Users user = new Users();
+        user.setUserName(registrationRequest.getUserName());
+        user.setEmail(registrationRequest.getEmail());
+        user.setPassword(registrationRequest.getPassword());
+        user.setLastName(registrationRequest.getLastName());
+        user.setFirstName(registrationRequest.getFirstName());
+        user.setMobileNumber(registrationRequest.getMobileNumber());
+        user.setSubscribeToPromo(registrationRequest.isSubscribeToPromo() ? true : false);
         user.setAccountStatusId(0); // 0 for inactive
+        user.setAccountTypeId(0); // Default account type
+
+        // Save user
         Users savedUser = userService.saveUser(user);
 
-        // Generate verification token
+        // Save shipping address if present
+        if (registrationRequest.getShippingAddress() != null) {
+            shippingAddressService.saveShippingAddress(registrationRequest.getShippingAddress(), savedUser.getUserId());
+        }
+
         Map<String, Object> claims = new HashMap<>();
+        // Generate verification token
         String token = jwtUtil.generateToken(claims, savedUser.getUserName());
         String confirmationUrl = "http://localhost:8080/user/confirm?token=" + token;
 
-        emailService.sendEmail(user.getEmail(), "Account Confirmation", "Please confirm your account by clicking on this link: " + confirmationUrl);
+        // Send confirmation email (implement this in your EmailService)
+        // emailService.sendEmail(user.getEmail(), "Account Confirmation", "Please confirm your account by clicking on this link: " + confirmationUrl);
+      emailService.sendEmail(user.getEmail(), "Account Confirmation", "Please confirm your account by clicking on this link: " + confirmationUrl);
 
-        return "Registration successful. Please check your email to confirm your account.";
+        return ResponseEntity.ok("Registration successful. Please check your email to confirm your account.");
     }
+
 
     @GetMapping("/confirm")
     public ResponseEntity<?> confirmUser(@RequestParam("token") String token) {
@@ -84,30 +126,6 @@ public class UserController {
         return ResponseEntity.ok("User verified successfully");
     }
     
-    // Login Endpoint
-//    @PostMapping("/login")
-//    public ResponseEntity<?> loginUser(@RequestBody LoginRequest loginRequest) {
-////        Authentication authentication = authenticationManager.authenticate(
-////                new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
-////        SecurityContextHolder.getContext().setAuthentication(authentication);
-////
-////        String username = loginRequest.getUsername(); // Extract username from the login request
-////        String token = jwtUtil.generateToken(username);
-////
-////        return ResponseEntity.ok("Bearer " + token);
-//    	 Authentication authentication = authenticationManager.authenticate(
-//                 new UsernamePasswordAuthenticationToken(loginRequest.getUsername(), loginRequest.getPassword()));
-//         SecurityContextHolder.getContext().setAuthentication(authentication);
-//
-//         String username = loginRequest.getUsername(); // Extract username from the login request
-//         String token = jwtUtil.generateToken(username);
-//
-//         Users user = userService.findByUsername(username).orElseThrow(() -> new RuntimeException("User not found"));
-//
-//         JwtResponse response = new JwtResponse("Bearer " + token, user.getAccountTypeId());
-//
-//         return ResponseEntity.ok(response);
-//    }
     
     @PostMapping("/login")
     public ResponseEntity<?> loginUser(@RequestBody LoginRequest loginRequest) {

@@ -9,7 +9,10 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import com.example.bookStoreWebApp.dto.UserDto;
+import com.example.bookStoreWebApp.dto.UserRegistrationRequestDTO;
+import com.example.bookStoreWebApp.model.ShippingAddress;
 import com.example.bookStoreWebApp.model.Users;
+import com.example.bookStoreWebApp.repository.ShippingAddressRepository;
 import com.example.bookStoreWebApp.repository.UserRepository;
 
 
@@ -19,6 +22,15 @@ public class UserServiceImpl implements UserService, UserDetailsService{
 	
 	@Autowired
 	private UserRepository userRepository;
+	
+	@Autowired
+    private ShippingAddressRepository shippingAddressRepository;
+	
+	 @Override
+	    public Users saveUser(Users user) {
+	        return userRepository.save(user);
+	    }
+
 	
 	 @Override
 	    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
@@ -31,10 +43,34 @@ public class UserServiceImpl implements UserService, UserDetailsService{
 	                .build();
 	    }
 	
-	@Override
-	public Users saveUser(Users user) {
-		return userRepository.save(user);
-	}
+	 @Override
+	 public Users registerUserWithAddress(UserRegistrationRequestDTO requestDTO) {
+	     Users user = new Users();
+	     user.setUserName(requestDTO.getUserName());
+	     user.setEmail(requestDTO.getEmail());
+	     user.setPassword(requestDTO.getPassword());
+	     user.setFirstName(requestDTO.getFirstName());
+	     user.setLastName(requestDTO.getLastName());
+	     user.setMobileNumber(requestDTO.getMobileNumber());
+	     user.setSubscribeToPromo(requestDTO.isSubscribeToPromo() ? true : false);
+
+	     // Save user
+	     Users savedUser = saveUser(user);
+
+	     // Handle shipping address
+	     if (requestDTO.getShippingAddress() != null) {
+	         ShippingAddress address = new ShippingAddress();
+	         address.setStreet(requestDTO.getShippingAddress().getStreet());
+	         address.setCity(requestDTO.getShippingAddress().getCity());
+	         address.setState(requestDTO.getShippingAddress().getState());
+	         address.setZipCode(requestDTO.getShippingAddress().getZipCode());
+	         address.setUserId(savedUser.getUserId());
+	         shippingAddressRepository.save(address);
+	     }
+
+	     return savedUser;
+	 }
+
 	
 	@Override
     public Optional<Users> findByUsername(String userName) {
@@ -73,6 +109,7 @@ public class UserServiceImpl implements UserService, UserDetailsService{
 	    }
 	    return Optional.empty();
 	}
+
 
 
 
