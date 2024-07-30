@@ -23,9 +23,11 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.bookStoreWebApp.dto.JwtResponse;
 import com.example.bookStoreWebApp.dto.LoginRequest;
+import com.example.bookStoreWebApp.dto.ShippingAddressDTO;
 import com.example.bookStoreWebApp.dto.UpdateUserDto;
 import com.example.bookStoreWebApp.dto.UserDto;
 import com.example.bookStoreWebApp.dto.UserRegistrationRequestDTO;
+import com.example.bookStoreWebApp.model.ShippingAddress;
 import com.example.bookStoreWebApp.model.Users;
 import com.example.bookStoreWebApp.security.JwtUtil;
 import com.example.bookStoreWebApp.service.EmailService;
@@ -55,29 +57,8 @@ public class UserController {
     @Autowired
     private JwtUtil jwtUtil;
 
-//    @PostMapping("/add")
-//    public String add(@RequestBody Users user) {
-//        userService.saveUser(user);
-//        return "New User is Added";
-//    }
     
-    
-// // // Registration Endpoint
-//    @PostMapping("/add")
-//    public String add(@RequestBody Users user) {
-//        user.setAccountStatusId(0); // 0 for inactive
-//        Users savedUser = userService.saveUser(user);
-//
-//        // Generate verification token
-//        Map<String, Object> claims = new HashMap<>();
-//        String token = jwtUtil.generateToken(claims, savedUser.getUserName());
-//        String confirmationUrl = "http://localhost:8080/user/confirm?token=" + token;
-//
-//        emailService.sendEmail(user.getEmail(), "Account Confirmation", "Please confirm your account by clicking on this link: " + confirmationUrl);
-//
-//        return "Registration successful. Please check your email to confirm your account.";
-//    }
-    
+    //registration endpoint
     @PostMapping("/add")
     public ResponseEntity<String> add(@Valid @RequestBody UserRegistrationRequestDTO registrationRequest) {
         // Create user from registration request
@@ -99,20 +80,23 @@ public class UserController {
         if (registrationRequest.getShippingAddress() != null) {
             shippingAddressService.saveShippingAddress(registrationRequest.getShippingAddress(), savedUser.getUserId());
         }
+        
+        
 
         Map<String, Object> claims = new HashMap<>();
         // Generate verification token
         String token = jwtUtil.generateToken(claims, savedUser.getUserName());
         String confirmationUrl = "http://localhost:8080/user/confirm?token=" + token;
 
-        // Send confirmation email (implement this in your EmailService)
-        // emailService.sendEmail(user.getEmail(), "Account Confirmation", "Please confirm your account by clicking on this link: " + confirmationUrl);
+      //email verification link
       emailService.sendEmail(user.getEmail(), "Account Confirmation", "Please confirm your account by clicking on this link: " + confirmationUrl);
 
         return ResponseEntity.ok("Registration successful. Please check your email to confirm your account.");
     }
 
+   
 
+    //confirm user verification
     @GetMapping("/confirm")
     public ResponseEntity<?> confirmUser(@RequestParam("token") String token) {
         String username = jwtUtil.extractUsername(token);
@@ -127,6 +111,7 @@ public class UserController {
     }
     
     
+    //login endpoint
     @PostMapping("/login")
     public ResponseEntity<?> loginUser(@RequestBody LoginRequest loginRequest) {
         // Authenticate user
@@ -207,8 +192,54 @@ public class UserController {
         return ResponseEntity.ok("Your password has been reset.");
     }
 
+ // Get address by username
+    @GetMapping("/address")
+    public ResponseEntity<?> getAddressByUsername(@RequestParam String username) {
+        Optional<Users> userOptional = userService.findByUsername(username);
 
+        if (userOptional.isPresent()) {
+            Users user = userOptional.get();
+            ShippingAddress address = shippingAddressService.findAddressByUserId(user.getUserId());
 
+            if (address != null) {
+                return ResponseEntity.ok(address);
+            } else {
+            	 Map<String, String> response = new HashMap<>();
+                 response.put("message", "Address not found");
+                 return ResponseEntity.status(HttpStatus.OK).body(response);
+            }
+        } else {
+        	 Map<String, String> response = new HashMap<>();
+             response.put("message", "User not found");
+             return ResponseEntity.status(HttpStatus.OK).body(response);
+        }
+    }
+   
+    @PostMapping("/address")
+    public ResponseEntity<?> updateAddress(@RequestParam String username, @Valid @RequestBody ShippingAddressDTO addressDTO) {
+        Optional<Users> userOptional = userService.findByUsername(username);
 
+        if (userOptional.isPresent()) {
+            Users user = userOptional.get();
+            ShippingAddress existingAddress = shippingAddressService.findAddressByUserId(user.getUserId());
 
+            if (existingAddress != null) {
+                // Update existing address
+                existingAddress.setStreet(addressDTO.getStreet());
+                existingAddress.setCity(addressDTO.getCity());
+                existingAddress.setState(addressDTO.getState());
+                existingAddress.setZipCode(addressDTO.getZipCode());
+                shippingAddressService.saveAddress(existingAddress);
+                return ResponseEntity.ok("Address updated successfully");
+            } else {
+                // Add new address
+                shippingAddressService.saveShippingAddress(addressDTO, user.getUserId());
+                return ResponseEntity.status(HttpStatus.CREATED).body("Address added successfully");
+            }
+        } else {
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "User not found");
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        }
+    }
 }

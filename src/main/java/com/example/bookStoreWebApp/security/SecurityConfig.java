@@ -32,15 +32,15 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http.csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/user/add", "/user/login", "/books").permitAll()
-                .requestMatchers("/user/**", "/books/**").permitAll()
-                .anyRequest().authenticated()
+                .requestMatchers("/user/add", "/user/login", "/books").permitAll() // Open access to these endpoints
+                .requestMatchers("user/**").permitAll() // Ensure /address endpoints are also accessible
+                .anyRequest().authenticated() // Secure other endpoints
             )
             .exceptionHandling(exception -> exception
-                .authenticationEntryPoint(customAuthenticationEntryPoint)
+                .authenticationEntryPoint(customAuthenticationEntryPoint) // Custom error handling
             )
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class);
+            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)) // Stateless sessions
+            .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class); // JWT filter
 
         return http.build();
     }
@@ -50,9 +50,9 @@ public class SecurityConfig {
         return authenticationConfiguration.getAuthenticationManager();
     }
 
-    @SuppressWarnings("deprecation")
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return NoOpPasswordEncoder.getInstance();
+        return NoOpPasswordEncoder.getInstance(); // Use a proper encoder in production
     }
 }
+

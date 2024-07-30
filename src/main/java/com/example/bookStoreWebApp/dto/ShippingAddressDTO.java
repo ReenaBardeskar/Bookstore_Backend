@@ -1,12 +1,38 @@
 package com.example.bookStoreWebApp.dto;
 
+import com.example.bookStoreWebApp.model.ShippingAddress;
+
 public class ShippingAddressDTO {
+    private int addressId;
     private String street;
     private String city;
     private String state;
     private String zipCode;
+    private int userId;
 
-    // Getters and Setters
+    // Default constructor
+    public ShippingAddressDTO() {
+    }
+
+    // Constructor to initialize from ShippingAddress entity
+    public ShippingAddressDTO(ShippingAddress address) {
+        this.addressId = address.getAddressID();
+        this.street = address.getStreet();
+        this.city = address.getCity();
+        this.state = address.getState();
+        this.zipCode = address.getZipCode();
+        this.userId = address.getUserId();
+    }
+
+    // Getters and setters
+    public int getAddressId() {
+        return addressId;
+    }
+
+    public void setAddressId(int addressId) {
+        this.addressId = addressId;
+    }
+
     public String getStreet() {
         return street;
     }
@@ -37,5 +63,13 @@ public class ShippingAddressDTO {
 
     public void setZipCode(String zipCode) {
         this.zipCode = zipCode;
+    }
+
+    public int getUserId() {
+        return userId;
+    }
+
+    public void setUserId(int userId) {
+        this.userId = userId;
     }
 }
