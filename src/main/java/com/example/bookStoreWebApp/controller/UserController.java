@@ -23,14 +23,17 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.example.bookStoreWebApp.dto.JwtResponse;
 import com.example.bookStoreWebApp.dto.LoginRequest;
+import com.example.bookStoreWebApp.dto.PaymentCardDTO;
 import com.example.bookStoreWebApp.dto.ShippingAddressDTO;
 import com.example.bookStoreWebApp.dto.UpdateUserDto;
 import com.example.bookStoreWebApp.dto.UserDto;
 import com.example.bookStoreWebApp.dto.UserRegistrationRequestDTO;
+import com.example.bookStoreWebApp.model.PaymentCard;
 import com.example.bookStoreWebApp.model.ShippingAddress;
 import com.example.bookStoreWebApp.model.Users;
 import com.example.bookStoreWebApp.security.JwtUtil;
 import com.example.bookStoreWebApp.service.EmailService;
+import com.example.bookStoreWebApp.service.PaymentCardService;
 import com.example.bookStoreWebApp.service.ShippingAddressService;
 import com.example.bookStoreWebApp.service.UserService;
 
@@ -50,6 +53,9 @@ public class UserController {
     
     @Autowired
     private ShippingAddressService shippingAddressService;
+    
+    @Autowired
+    private PaymentCardService paymentCardService;
 
     @Autowired
     private AuthenticationManager authenticationManager;
@@ -240,6 +246,43 @@ public class UserController {
             Map<String, String> response = new HashMap<>();
             response.put("message", "User not found");
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        }
+    }
+    
+    
+    @GetMapping("/payment")
+    public ResponseEntity<?> getPaymentCard(@RequestParam String username) {
+        Optional<Users> userOptional = userService.findByUsername(username);
+
+        if (userOptional.isPresent()) {
+            Users user = userOptional.get();
+            PaymentCard paymentCard = paymentCardService.getPaymentCardByUserID(user.getUserId());
+
+            if (paymentCard != null) {
+                return ResponseEntity.ok(paymentCard);
+            } else {
+            	 Map<String, String> response = new HashMap<>();
+                 response.put("message", "Payment card not found");
+                 return ResponseEntity.status(HttpStatus.OK).body(response);
+            }
+        } else {
+        	Map<String, String> response = new HashMap<>();
+            response.put("message", "User not found");
+            return ResponseEntity.status(HttpStatus.OK).body(response);
+            
+        }
+    }
+
+    @PostMapping("/payment")
+    public ResponseEntity<?> saveOrUpdatePaymentCard(@RequestParam String username, @RequestBody PaymentCardDTO paymentCardDTO) {
+        Optional<Users> userOptional = userService.findByUsername(username);
+
+        if (userOptional.isPresent()) {
+            Users user = userOptional.get();
+            paymentCardService.saveOrUpdatePaymentCard(paymentCardDTO, user.getUserId());
+            return ResponseEntity.ok("Payment card updated successfully");
+        } else {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
         }
     }
 }
