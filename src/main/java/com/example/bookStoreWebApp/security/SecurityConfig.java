@@ -33,7 +33,7 @@ public class SecurityConfig {
         http.csrf(csrf -> csrf.disable())
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/user/add", "/user/login", "/books").permitAll() // Open access to these endpoints
-                .requestMatchers("user/**").permitAll() // Ensure /address endpoints are also accessible
+                .requestMatchers("/user/**", "/books/**").permitAll() // Ensure /address endpoints are also accessible
                 .anyRequest().authenticated() // Secure other endpoints
             )
             .exceptionHandling(exception -> exception
