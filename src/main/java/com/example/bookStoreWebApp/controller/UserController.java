@@ -95,7 +95,7 @@ public class UserController {
         String confirmationUrl = "http://localhost:8080/user/confirm?token=" + token;
 
       //email verification link
-      emailService.sendEmail(user.getEmail(), "Account Confirmation", "Please confirm your account by clicking on this link: " + confirmationUrl);
+      emailService.sendEmail(user.getEmail(), "Account Confirmation", "New users promo code: 10OFF \n" + "Please confirm your account by clicking on this link: " + confirmationUrl);
 
         return ResponseEntity.ok("Registration successful. Please check your email to confirm your account.");
     }
@@ -280,7 +280,7 @@ public class UserController {
         if (userOptional.isPresent()) {
             Users user = userOptional.get();
             paymentCardService.saveOrUpdatePaymentCard(paymentCardDTO, user.getUserId());
-            return ResponseEntity.ok("Payment card updated successfully");
+            return ResponseEntity.ok(paymentCardDTO);
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body("User not found");
         }
