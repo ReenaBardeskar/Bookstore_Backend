@@ -64,7 +64,7 @@ public class OrderServiceImpl implements OrderService {
         StringBuilder emailContent = new StringBuilder();
         emailContent.append("Thank you for your order! Here are the details:\n\n");
         emailContent.append("Order ID: ").append(order.getOrderId()).append("\n");
-        emailContent.append("Total Amount: $").append(order.getTotalAmount()).append("\n\n");
+        emailContent.append("Total Amount: $").append(String.format("%.2f", order.getTotalAmount())).append("\n\n");
 
         emailContent.append("Books Ordered:\n");
         for (int i = 0; i < orderItems.size(); i++) {
